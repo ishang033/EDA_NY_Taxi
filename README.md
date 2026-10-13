@@ -15,8 +15,9 @@ Exploratory data analysis of 2023 NYC Yellow Taxi trip records (upGrad assignmen
 2. Expected layout:
    ```
    <project_dir>/
-   └── data/
-       ├── yellow_tripdata_2023-01.parquet … yellow_tripdata_2023-12.parquet
+   ├── data/
+   │   └── yellow_tripdata_2023-01.parquet … yellow_tripdata_2023-12.parquet
+   └── taxi_zones/
        └── taxi_zones/taxi_zones.shp (+ .shx, .dbf, .prj …)
    ```
 3. Run all cells. The sample is saved to `<project_dir>/sampled_taxi_2023.parquet`.
@@ -24,7 +25,7 @@ Exploratory data analysis of 2023 NYC Yellow Taxi trip records (upGrad assignmen
 ## Assumptions
 
 - **Sampling:** 0.75% of the trips in every date-hour (~290k trips). Each trip carries a `sample_weight` (trips in its date-hour ÷ trips sampled) used to scale counts and revenue to real totals.
-- **Negative amounts:** rows with a negative fare or total are reversal records (refunds, disputes, voids) and are dropped; other negative components are taken as absolute values.
+- **Negative amounts:** rows with a negative fare or total are reversal records (refunds, disputes, voids) and are dropped; any other negative components are kept and flagged in `has_negative_component`.
 - **Missing values:**
   - `passenger_count` and zero counts → mode (1)
   - `RatecodeID` (and invalid code 99) → mode (1)

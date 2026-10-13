@@ -49,7 +49,7 @@ insert_after(15, "code", r'''
 # ---- Paths: change project_dir to the folder on your machine ----
 project_dir = r"D:\Upgrad\Executive Diploma AIML\NY_Yellow_taxi_project"
 trip_records_dir = os.path.join(project_dir, "data")
-zones_path = os.path.join(project_dir, "data", "taxi_zones", "taxi_zones.shp")
+zones_path = os.path.join(project_dir, "taxi_zones", "taxi_zones", "taxi_zones.shp")
 sampled_file = os.path.join(project_dir, "sampled_taxi_2023.parquet")
 
 # ---- Sampling ----
@@ -225,7 +225,11 @@ for file_name in file_list:
         del monthly_df, sampled_data
 
     except Exception as e:
-        print(f"Error reading file {file_name}: {e}")
+        # Annual estimates need every month, so stop instead of continuing
+        raise RuntimeError(f"Error reading file {file_name}: {e}") from e
+
+if len(sampled_parts) != 12:
+    raise ValueError(f"Expected 12 monthly files, sampled {len(sampled_parts)}")
 
 # Concatenate the sampled data of all the months into a single dataframe
 df = pd.concat(sampled_parts, ignore_index=True)
@@ -320,10 +324,13 @@ reversal_rows = df["fare_amount"].lt(0) | df["total_amount"].lt(0)
 print("Reversal rows dropped:", reversal_rows.sum())
 df = df.loc[~reversal_rows].copy()
 
-# Remaining negative components sit on otherwise valid trips, so the
-# sign is treated as an entry error and the absolute value is kept.
-df[money_columns] = df[money_columns].abs()
-print("Negative values left:", int(df[money_columns].lt(0).sum().sum()))
+# Any negative components left sit on trips with a positive fare and
+# total. There is no evidence of why, so the values are kept as they
+# are and flagged; analyses that count charges only use values > 0.
+df["has_negative_component"] = df[money_columns].lt(0).any(axis=1)
+remaining_negatives = df[money_columns].lt(0).sum()
+print("Trips with a negative component left:", df["has_negative_component"].sum())
+display(remaining_negatives[remaining_negatives > 0].to_frame("rows"))
 """
 
 CODE[47] = """
@@ -508,6 +515,7 @@ df["RatecodeID"] = df["RatecodeID"].astype(int)
 pickup = df["tpep_pickup_datetime"]
 df["pickup_date"] = pickup.dt.normalize()
 df["pickup_hour"] = pickup.dt.hour
+df["dropoff_hour"] = df["tpep_dropoff_datetime"].dt.hour
 df["pickup_day"] = pickup.dt.day_name()
 df["pickup_month"] = pickup.dt.month
 df["pickup_quarter"] = pickup.dt.quarter
@@ -976,13 +984,14 @@ plot_top_zones(top_pickup_zones, top_dropoff_zones,
                "Average trips per hour")
 
 # Hourly pickup and dropoff trends in these zones
-for zone_column, top_zones, label, cmap in [
-    ("pickup_zone", top_pickup_zones, "Pickups", "Blues"),
-    ("dropoff_zone", top_dropoff_zones, "Dropoffs", "Greens"),
+# Pickups are timed by pickup hour, dropoffs by dropoff hour
+for zone_column, hour_column, top_zones, label, cmap in [
+    ("pickup_zone", "pickup_hour", top_pickup_zones, "Pickups", "Blues"),
+    ("dropoff_zone", "dropoff_hour", top_dropoff_zones, "Dropoffs", "Greens"),
 ]:
     trend = (
         estimated_trips(df.loc[df[zone_column].isin(top_zones.index)],
-                        [zone_column, "pickup_hour"])
+                        [zone_column, hour_column])
         .unstack(fill_value=0)
         .reindex(top_zones.index)
         / days_in_2023
@@ -1018,9 +1027,11 @@ display(zone_flow.nsmallest(10, "pickup_dropoff_ratio").round(2))
 CODE[137] = """
 # During night hours (11pm to 5am) find the top 10 pickup and dropoff zones
 # Note that the top zones should be of night hours and not the overall top zones
-night_trips = df.loc[df["is_night"]]
-top_night_pickups = estimated_trips(night_trips, "pickup_zone").nlargest(10)
-top_night_dropoffs = estimated_trips(night_trips, "dropoff_zone").nlargest(10)
+# Night pickups use the pickup time, night dropoffs the dropoff time
+night_pickups = df.loc[df["pickup_hour"].isin(night_hours)]
+night_dropoffs = df.loc[df["dropoff_hour"].isin(night_hours)]
+top_night_pickups = estimated_trips(night_pickups, "pickup_zone").nlargest(10)
+top_night_dropoffs = estimated_trips(night_dropoffs, "dropoff_zone").nlargest(10)
 display(top_night_pickups.round(0).to_frame("estimated_night_pickups"))
 display(top_night_dropoffs.round(0).to_frame("estimated_night_dropoffs"))
 
