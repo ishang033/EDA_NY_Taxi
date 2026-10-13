@@ -49,6 +49,19 @@ vendor_labels = {
     7: "Helix"
 }
 
+# A yellow cab carries at most 6 passengers (5 + a child on a lap
+# in a minivan), so counts of 7–9 are treated as entry errors.
+max_passengers = 6
+taxi_2023["passenger_count_valid"] = taxi_2023["passenger_count_valid"].where(
+    taxi_2023["passenger_count_valid"].le(max_passengers)
+)
+passenger_trips = passenger_trips.loc[
+    passenger_trips["passenger_count_valid"].le(max_passengers)
+].copy()
+card_tip_trips["passenger_count_valid"] = card_tip_trips["passenger_count_valid"].where(
+    card_tip_trips["passenger_count_valid"].le(max_passengers)
+)
+
 
 # =========================================================
 # Helper functions for repeated tasks
@@ -247,29 +260,44 @@ display(variable_types)
 # 3a(iv). Monthly revenue trends
 # =========================================================
 
-# Revenue = total_amount of trips with a positive total, scaled
-# up by sample_weight to estimate the full-population revenue.
+# Revenue trips: positive fare and total, non-negative tip.
+# This leaves out refunds and adjustments (negative amounts).
+# Amounts are scaled up by sample_weight to estimate the full year.
+revenue_mask = (
+    taxi_2023["fare_amount"].gt(0)
+    & taxi_2023["total_amount"].gt(0)
+    & taxi_2023["tip_amount"].ge(0)
+)
 taxi_2023["estimated_revenue"] = (
-    taxi_2023["total_amount"].where(taxi_2023["total_amount"].gt(0))
+    taxi_2023["total_amount"].where(revenue_mask)
     * taxi_2023["sample_weight"]
 )
+taxi_2023["estimated_base_fare"] = (
+    taxi_2023["fare_amount"].where(revenue_mask)
+    * taxi_2023["sample_weight"]
+)
+print("Sampled trips in revenue analysis:", revenue_mask.sum())
+print("Sampled trips excluded (refunds/adjustments):", (~revenue_mask).sum())
 
 monthly_revenue = (
-    taxi_2023.groupby("pickup_month")
+    taxi_2023.loc[revenue_mask]
+    .groupby("pickup_month")
     .agg(
-        estimated_revenue=("estimated_revenue", "sum"),
         estimated_trips=("sample_weight", "sum"),
-        avg_total_per_trip=("total_amount", "mean")
+        estimated_revenue=("estimated_revenue", "sum"),
+        estimated_base_fare=("estimated_base_fare", "sum")
     )
     .reindex(range(1, 13))
 )
-monthly_revenue["revenue_millions"] = (
-    monthly_revenue["estimated_revenue"] / 1e6
+monthly_revenue["avg_total_per_trip"] = (
+    monthly_revenue["estimated_revenue"] / monthly_revenue["estimated_trips"]
 )
 display(monthly_revenue.round(2))
 
 plot_line(
-    monthly_revenue["revenue_millions"],
+    monthly_revenue[["estimated_revenue", "estimated_base_fare"]]
+    .rename(columns={"estimated_revenue": "Total charges",
+                     "estimated_base_fare": "Base fare"}) / 1e6,
     "Estimated Monthly Revenue — NYC Yellow Taxis 2023",
     "Month", "Revenue (USD millions)", xticks=range(1, 13)
 )
@@ -827,15 +855,20 @@ fare_per_passenger = (
     .agg(
         sampled_trips=("fare_per_mile", "size"),
         avg_fare_per_mile=("fare_per_mile", "mean"),
-        avg_fare_per_mile_per_passenger=("fare_per_mile_per_passenger", "mean")
+        avg_fare_per_mile_per_passenger=("fare_per_mile_per_passenger", "mean"),
+        median_fare_per_mile_per_passenger=("fare_per_mile_per_passenger", "median")
     )
 )
 display(fare_per_passenger.round(2))
 
+# Median shown next to the mean: per-mile values are right-skewed,
+# so a few extreme trips can move the mean noticeably.
 plot_bar(
-    fare_per_passenger["avg_fare_per_mile_per_passenger"],
-    "Average Fare per Mile per Passenger",
-    "Passenger Count", "USD per Mile per Passenger", color="teal"
+    fare_per_passenger[["avg_fare_per_mile_per_passenger",
+                        "median_fare_per_mile_per_passenger"]],
+    "Fare per Mile per Passenger",
+    "Passenger Count", "USD per Mile per Passenger",
+    color=["teal", "darkorange"]
 )
 
 
