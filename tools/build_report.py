@@ -33,6 +33,7 @@ ASSUMPTIONS = [
     "**Fare per mile:** uses trips of at least 0.5 miles, because the fixed starting fare makes very short trips look extremely expensive per mile.",
     "**Tips:** analysed on credit-card trips only, because cash tips are not recorded. Tip % = tip ÷ fare × 100.",
     "**Speed analysis:** leaves out trips that start and end in the same zone and trips longer than 180 minutes; route averages need at least 10 sampled trips.",
+    "**Limitations:** all figures are estimates scaled up from a 0.75% sample of the trips kept after cleaning, so small groups (rare routes, small zones, the Myle vendor) are less reliable. Filling missing values with the mode and removing outliers can slightly shift averages, and trip records show completed trips only, not unmet demand or waiting times.",
 ]
 
 # anchor (start of the starter's task line) -> list of content items:
@@ -214,8 +215,9 @@ CONTENT = {
         ("p", "**Shape the fleet to the daily demand curve.** On weekdays, bring cabs online from 6 AM and have the most cabs on the road from 3 PM to 7 PM (6 PM averages about 7,800 trips per weekday). Keep the smallest fleet at 4–5 AM, when demand is under a tenth of the peak."),
         ("p", "**Run a separate weekend schedule.** Move driver hours from weekend mornings (7–8 AM is well under half the weekday level) to 11 PM–4 AM, when weekend demand is 2.5–5.8 times that of a weekday night."),
         ("p", "**Avoid Midtown cross-traffic in the daytime.** The slowest routes are short Midtown hops at 3–4 mph from 8 AM to 7 PM. Dispatch should assign the nearest cab on the same side of Midtown, avoid sending empty cabs through Midtown to reach a pickup, and show realistic ETAs on these routes."),
-        ("p", "**Run the airports as dedicated queues.** JFK is the busiest pickup zone (about 225 pickups an hour) and both airports have far more pickups than dropoffs (JFK 4.3×, LaGuardia 2.5×), so they need a steady supply of cabs fed from nearby Queens dropoffs."),
+        ("p", "**Run the airports as dedicated queues.** JFK is the busiest pickup zone (about 225 pickups an hour) and both airports have far more pickups than dropoffs (JFK 4.3×, LaGuardia 2.5×), so they need a steady supply of cabs fed from nearby Queens dropoffs. Trip records do not show queue lengths, so the number of cabs sent should follow live waiting times."),
         ("p", "**Plan for the seasons.** Daily demand is lowest in July–September and highest in May and October: schedule leave and maintenance in summer and run a full fleet in spring and Q4."),
+        ("p", "**Measure the effect.** Track passenger waiting time, completed trips per cab per hour and empty miles before and after each change to confirm it improves operations."),
     ],
     "Suggestions on strategically positioning cabs": [
         ("p", "**Daytime core (weekdays 7 AM–8 PM):** Upper East Side South and North, Midtown Center and East, Penn Station, Lincoln Square East, Times Square and Murray Hill, each with 125–200 pickups an hour on average."),

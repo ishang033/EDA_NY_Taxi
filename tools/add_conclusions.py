@@ -43,8 +43,10 @@ RECOMMENDATIONS_ROUTING = """
 1. **Shape the fleet to the daily demand curve.** On weekdays, bring cabs online from 6 AM and have the most cabs on the road from 3 PM to 7 PM (6 PM averages ~7,800 trips per weekday). Keep the smallest fleet at 4–5 AM, when demand is under a tenth of the peak.
 2. **Run a separate weekend schedule.** Move driver hours from weekend mornings (7–8 AM is well under half the weekday level) to **11 PM–4 AM**, when weekend demand is 2.5–5.8 times that of a weekday night.
 3. **Avoid Midtown cross-traffic in the daytime.** The slowest routes are short Midtown hops (Penn Station → Garment District, Midtown East → Times Square) at **3–4 mph from 8 AM to 7 PM**; under a mile can take 15–20 minutes. Dispatch should assign the nearest cab on the same side of Midtown, avoid sending empty cabs through Midtown to reach a pickup, and show realistic ETAs for these routes.
-4. **Run the airports as dedicated queues.** JFK is the single busiest pickup zone (~225 pickups an hour) and both airports have far more pickups than dropoffs (JFK 4.3×, LaGuardia 2.5×), so they need a steady flow of cabs, fed from nearby Queens dropoffs.
+4. **Run the airports as dedicated queues.** JFK is the single busiest pickup zone (~225 pickups an hour) and both airports have far more pickups than dropoffs (JFK 4.3×, LaGuardia 2.5×), so they need a steady flow of cabs, fed from nearby Queens dropoffs. Trip records do not show queue lengths, so the number of cabs sent should be adjusted using live waiting times.
 5. **Plan for the seasons.** Demand per day is lowest in July–September (~90,000–94,000 trips per day) and highest in May and October (~112,000). Schedule leave and vehicle maintenance in summer and run a full fleet in spring and Q4.
+
+To check that these changes work, track passenger waiting time, completed trips per cab per hour and empty miles driven before and after each change.
 """
 
 RECOMMENDATIONS_POSITIONING = """
