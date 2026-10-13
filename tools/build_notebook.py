@@ -827,13 +827,16 @@ plt.show()
 
 CODE[113] = """
 # can you try displaying the zones DF sorted by the number of trips?
+# One row per LocationID, so a zone drawn as several shapes (in some
+# versions of the shapefile) is not listed or counted twice.
+unique_zone_trips = zones_with_trips.drop_duplicates("LocationID")
 display(
-    zones_with_trips.sort_values("estimated_trips", ascending=False)
+    unique_zone_trips.sort_values("estimated_trips", ascending=False)
     [["LocationID", "zone", "borough", "estimated_trips"]]
     .head(15).round(0)
 )
 
-borough_share = zones_with_trips.groupby("borough")["estimated_trips"].sum()
+borough_share = unique_zone_trips.groupby("borough")["estimated_trips"].sum()
 display((borough_share / borough_share.sum() * 100).sort_values(ascending=False)
         .round(2).to_frame("share_of_pickups_percent"))
 """
