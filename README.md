@@ -6,7 +6,10 @@ Exploratory data analysis of 2023 NYC Yellow Taxi trip records (upGrad assignmen
 
 | File | Contents |
 |---|---|
-| `notebooks/EDA_Optimising_NYC_Taxis_Ishan_Ghosh.ipynb` | The upGrad starter notebook with every task (1.1.1 – 3.2.16) filled in. Headings and questions are unchanged; answers are added as cells below each question. |
+| `notebooks/EDA_Optimising_NYC_Taxis_Ishan_Ghosh.ipynb` | The upGrad starter notebook, executed on the full 2023 data, with every task (1.1.1 – 4.1.3) filled in. Headings and questions are unchanged; answers are added as cells below each question. |
+| `report/Report_EDA_Optimising_NYC_Taxis_Ishan_Ghosh.docx` | The report starter filled with results, charts and recommendations (save as PDF to submit). |
+| `tools/add_conclusions.py` | Adds the result-based answers and conclusions to an executed notebook. |
+| `tools/build_report.py` | Fills the report starter with text and the notebook's charts. |
 | `tools/build_notebook.py` | Rebuilds the notebook from the starter: `python tools/build_notebook.py <starter.ipynb> <output.ipynb>` |
 
 ## Running
